@@ -7,6 +7,11 @@ app.use(bodyParser.json());
 import 'dotenv/config'
 app.use(cors());
 
+import auth from './routes/auth.route.js';
+
+app.use('/api/v1/auth/',auth);
+
+
 app.listen(4000,()=>{
     console.log("Server is running.");
 });

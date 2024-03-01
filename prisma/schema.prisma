@@ -26,9 +26,16 @@ model BlogPost {
   updatedAt DateTime @updatedAt
   title     String   
   content   String
-  media_url String
+  video_url String
   published Boolean  @default(false)
   author    User     @relation(fields: [authorId], references: [id])
   authorId  Int
+  blogImages BlogImage[]
+}
+model BlogImage {
+  id        Int      @id @default(autoincrement())
+  image_url String
+  blog    BlogPost     @relation(fields: [blogId], references: [id])
+  blogId  Int
 }
 

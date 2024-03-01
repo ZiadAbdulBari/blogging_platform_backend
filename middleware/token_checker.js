@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 const tokenCheck = (req,res,next)=>{
     const {authorization} = req.headers;
-    // console.log(authorization);
     try{
         const token = authorization;
         const decode = jwt.verify(token,process.env.JWT_TOKEN);
@@ -18,4 +17,4 @@ const tokenCheck = (req,res,next)=>{
     }
 }
 
-module.exports = tokenCheck;
+export default tokenCheck;

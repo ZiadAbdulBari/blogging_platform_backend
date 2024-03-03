@@ -10,16 +10,22 @@ export const createBlog = async (req, res) => {
       });
     }
     const mediaFiles = req.files;
-    let video_url = "none";
-    // cloudinary.uploader.upload_stream(
-    //   {
-    //     upload_preset: process.env.UPLOAD_PRESET,
-    //     resource_type: "video",
-    //   },
-    //   (error, result) => {
-    //     video_url = result.url;
-    //   }
-    // ).end(mediaFiles.video[0].buffer)
+    let video_url = "";
+    // new Promise((resolve) => {
+    //   cloudinary.uploader
+    //     .upload_stream(
+    //       {
+    //         upload_preset: process.env.UPLOAD_PRESET,
+    //         resource_type: "video",
+    //       },
+    //       (error, uploadResult) => {
+    //         return resolve(uploadResult);
+    //       }
+    //     )
+    //     .end(mediaFiles.video[0].buffer);
+    // }).then((uploadResult) => {
+    //   video_url = JSON.parse(JSON.stringify(uploadResult)).url;
+    // });
     const newBlog = await prisma.blogPost.create({
       data: {
         title: req.body.title,
@@ -89,13 +95,42 @@ export const getBlog = async (req, res) => {
       });
     }
     const blogList = await prisma.blogPost.findMany({
-      where: {
-        id: req.id,
+      relationLoadStrategy: 'join',
+      include: {
+        blogImages: true,
       },
     });
     return res.status(200).json({
       status: 200,
       list: blogList,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 500,
+      message: error,
+    });
+  }
+};
+export const getOwnBlog = async (req, res) => {
+  try {
+    if (req.method !== "GET") {
+      return res.status(405).json({
+        status: 405,
+        message: "Method is not allowed.",
+      });
+    }
+    const OwnBlogList = await prisma.blogPost.findMany({
+      where: {
+        id: req.id,
+      },
+      relationLoadStrategy: 'join',
+      include: {
+        blogImages: true,
+      },
+    });
+    return res.status(200).json({
+      status: 200,
+      list: OwnBlogList,
     });
   } catch (error) {
     return res.status(500).json({

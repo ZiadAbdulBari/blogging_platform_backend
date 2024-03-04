@@ -189,3 +189,39 @@ export const deleteBlog = async (req, res) => {
     });
   }
 };
+
+export const getSearchedBlog = async (req, res) => {
+  try {
+    if (req.method !== "POST") {
+      return res.status(405).json({
+        status: 405,
+        message: "Method is not allowed.",
+      });
+    }
+    const blogList = await prisma.blogPost.findMany({
+      where: {
+        title: { contains: req.body.searchkey },
+      },
+      relationLoadStrategy: 'join',
+      include: {
+        blogImages: true,
+        author:{
+          select:{
+            id:true,
+            name:true,
+          }
+        },
+      },
+    });
+    return res.status(200).json({
+      status: 200,
+      list: blogList,
+    });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      status: 500,
+      message: error,
+    });
+  }
+};

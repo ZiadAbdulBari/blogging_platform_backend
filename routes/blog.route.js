@@ -6,6 +6,7 @@ import {
   getOwnBlog,
   updateBlog,
   readFullBlog,
+  getSearchedBlog,
 } from "../controllers/blog.controller.js";
 import tokenCheck from "../middleware/token_checker.js";
 import multer from "multer";
@@ -21,5 +22,6 @@ route.put("/update-blog", tokenCheck, updateBlog);
 route.get("/list-blog", getBlog);
 route.get("/own-blog", tokenCheck, getOwnBlog);
 route.get("/blog-detail/:id", readFullBlog);
+route.post("/blog-search", getSearchedBlog);
 route.delete("/delete-blog", tokenCheck, deleteBlog);
 export default route;

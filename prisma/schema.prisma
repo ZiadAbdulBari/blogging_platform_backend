@@ -28,7 +28,6 @@ model BlogPost {
   title     String   
   content   String
   video_url String
-  published Boolean  @default(false)
   author    User     @relation(fields: [authorId], references: [id])
   authorId  Int
   blogImages BlogImage[]

@@ -129,7 +129,11 @@ export const getOwnBlog = async (req, res) => {
         message: "Method is not allowed.",
       });
     }
+    const page = parseInt(req.query.page);
+    const pageSize = parseInt(req.query.pageSize);
     const OwnBlogList = await prisma.blogPost.findMany({
+      skip: page>1?(page-1*pageSize):page*pageSize,
+      take: pageSize,
       where: {
         authorId: req.id,
       },
@@ -144,9 +148,11 @@ export const getOwnBlog = async (req, res) => {
         },
       },
     });
+    const blogCount = await prisma.blogPost.count()
+    const totalPage = Math.ceil(blogCount / pageSize);
     return res.status(200).json({
       status: 200,
-      list: OwnBlogList,
+      list: {currentpage:page,totalPage:totalPage,list:OwnBlogList},
     });
   } catch (error) {
     return res.status(500).json({

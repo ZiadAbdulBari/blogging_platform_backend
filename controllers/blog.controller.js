@@ -43,7 +43,8 @@ export const createBlog = async (req, res) => {
             });
           }
         }
-      ).end(mediaFiles.video[0].buffer);
+      )
+      .end(mediaFiles.video[0].buffer);
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -90,7 +91,12 @@ export const getBlog = async (req, res) => {
         message: "Method is not allowed.",
       });
     }
+    const page = parseInt(req.query.page);
+    const pageSize = parseInt(req.query.pageSize);
+    
     const blogList = await prisma.blogPost.findMany({
+      skip: page>1?(page-1*pageSize):page*pageSize,
+      take: pageSize,
       relationLoadStrategy: "join",
       include: {
         blogImages: true,
@@ -102,9 +108,11 @@ export const getBlog = async (req, res) => {
         },
       },
     });
+    const blogCount = await prisma.blogPost.count();
+    const totalPage = Math.ceil(blogCount / pageSize);
     return res.status(200).json({
       status: 200,
-      list: blogList,
+      list: {currentpage:page,totalPage:totalPage,list:blogList}
     });
   } catch (error) {
     return res.status(500).json({

@@ -1,40 +1,51 @@
 import cloudinary from "../config/cloudinary.config.js";
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 export const createBlog = async (req, res) => {
   try {
+    const mediaFiles = req.files;
     if (req.method !== "POST") {
       return res.status(405).json({
         status: 405,
         message: "Method is not allowed.",
       });
     }
-    const mediaFiles = req.files;
-    let video_url = "";
-    const newBlog = await prisma.blogPost.create({
-      data: {
-        title: req.body.title,
-        content: req.body.content,
-        video_url: video_url,
-        authorId: req.id,
-      },
-    });
-    mediaFiles.images.forEach(async (image) => {
-      const b64 = Buffer.from(image.buffer).toString("base64");
-      let dataURI = "data:" + image.mimetype + ";base64," + b64;
-      const uploadImage = await cloudinary.uploader.upload(dataURI, {
-        upload_preset: process.env.UPLOAD_PRESET,
-      });
-      await prisma.blogImage.create({
-        data: { image_url: uploadImage.url, blogId: newBlog.id },
-      });
-    });
+    cloudinary.uploader
+      .upload_stream(
+        { resource_type: "video", upload_preset: process.env.UPLOAD_PRESET },
+        async (error, result) => {
+          if (error) {
+            return res.status(500).json({ error: "Failed to upload file" });
+          } else {
+            const newBlog = await prisma.blogPost.create({
+              data: {
+                title: req.body.title,
+                content: req.body.content,
+                video_url: result.url,
+                authorId: req.id,
+              },
+            });
+            mediaFiles.images.forEach(async (image) => {
+              const b64 = Buffer.from(image.buffer).toString("base64");
+              let dataURI = "data:" + image.mimetype + ";base64," + b64;
+              const uploadImage = await cloudinary.uploader.upload(dataURI, {
+                upload_preset: process.env.UPLOAD_PRESET,
+              });
+              await prisma.blogImage.create({
+                data: { image_url: uploadImage.url, blogId: newBlog.id },
+              });
+            });
 
-    return res.status(200).json({
-      status: 200,
-      message: "Successfully added a new blog",
-    });
+            return res.status(200).json({
+              status: 200,
+              message: "Successfully added a new blog",
+            });
+          }
+        }
+      ).end(mediaFiles.video[0].buffer);
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       status: 500,
       message: error,
@@ -80,14 +91,14 @@ export const getBlog = async (req, res) => {
       });
     }
     const blogList = await prisma.blogPost.findMany({
-      relationLoadStrategy: 'join',
+      relationLoadStrategy: "join",
       include: {
         blogImages: true,
-        author:{
-          select:{
-            id:true,
-            name:true,
-          }
+        author: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
     });
@@ -114,14 +125,14 @@ export const getOwnBlog = async (req, res) => {
       where: {
         authorId: req.id,
       },
-      relationLoadStrategy: 'join',
+      relationLoadStrategy: "join",
       include: {
         blogImages: true,
-        author:{
-          select:{
-            id:true,
-            name:true,
-          }
+        author: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
     });
@@ -148,14 +159,14 @@ export const readFullBlog = async (req, res) => {
       where: {
         id: parseInt(req.params.id),
       },
-      relationLoadStrategy: 'join',
+      relationLoadStrategy: "join",
       include: {
         blogImages: true,
-        author:{
-          select:{
-            id:true,
-            name:true,
-          }
+        author: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
     });
@@ -164,7 +175,7 @@ export const readFullBlog = async (req, res) => {
       detail: blogDetail,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
       status: 500,
       message: error,
@@ -202,14 +213,14 @@ export const getSearchedBlog = async (req, res) => {
       where: {
         title: { contains: req.body.searchkey },
       },
-      relationLoadStrategy: 'join',
+      relationLoadStrategy: "join",
       include: {
         blogImages: true,
-        author:{
-          select:{
-            id:true,
-            name:true,
-          }
+        author: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
     });
@@ -218,7 +229,7 @@ export const getSearchedBlog = async (req, res) => {
       list: blogList,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
       status: 500,
       message: error,
